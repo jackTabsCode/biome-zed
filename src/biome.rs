@@ -1,3 +1,4 @@
+use oxc_resolver::{ResolveOptions, Resolver};
 use std::{env, fs, path::Path};
 use zed::settings::LspSettings;
 use zed_extension_api::{
@@ -18,6 +19,35 @@ impl BiomeExtension {
     fs::metadata(path).map_or(false, |stat| stat.is_file())
   }
 
+  fn resolve_binary(&self, worktree: &zed::Worktree) -> Result<()> {
+    let (platform, arch) = zed::current_platform();
+    let specifier = format!(
+      "@biomejs/cli-{platform}-{arch}/biome",
+      platform = match platform {
+        zed::Os::Mac => "darwin",
+        zed::Os::Linux => "linux",
+        zed::Os::Windows => "win32",
+      },
+      arch = match arch {
+        zed::Architecture::Aarch64 => "arm64",
+        zed::Architecture::X8664 => "x64",
+        _ => return Err(format!("unsupported architecture: {arch:?}")),
+      },
+    );
+
+    let path = worktree.root_path();
+
+    println!("path: {path:?}");
+    println!("specifier: {specifier}");
+
+    match Resolver::new(ResolveOptions::default()).resolve(path, &specifier) {
+      Err(error) => println!("Error: {error}"),
+      Ok(resolution) => println!("Resolved: {:?}", resolution.full_path()),
+    };
+
+    Ok(())
+  }
+
   fn server_script_path(
     &mut self,
     language_server_id: &LanguageServerId,
@@ -34,6 +64,8 @@ impl BiomeExtension {
       !f["dependencies"]["@biomejs/biome"].is_null()
         || !f["devDependencies"]["@biomejs/biome"].is_null()
     });
+
+    self.resolve_binary(&worktree);
 
     let (platform, arch) = zed::current_platform();
     let binary_path = format!(

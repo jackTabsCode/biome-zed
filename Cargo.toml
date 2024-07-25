@@ -3,7 +3,7 @@ edition = "2021"
 license = "MIT"
 name    = "zed_biome"
 publish = false
-version = "0.0.6"
+version = "0.1.1"
 
 [lib]
 crate-type = ["cdylib"]
@@ -11,6 +11,7 @@ path       = "src/biome.rs"
 
 [dependencies]
 log                = "0.4.21"
+oxc_resolver       = "1.10.2"
 tracing            = "0.1.40"
 tracing-subscriber = "0.3.18"
 zed_extension_api  = "0.0.6"
